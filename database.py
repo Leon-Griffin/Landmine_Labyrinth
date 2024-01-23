@@ -1,44 +1,41 @@
 import sqlite3
 import os
-from user_record import UserRecord
-from game_record import GameRecord
-from typing import List
 
 class Database:
 
     # Initialisation of the database, requires a file path as a string, for example: "database_file.db"
     # Also takes arguments UserRecord and GameRecord which are the structures I'm using to represent records from the Users and Games tables respectively
-    def __init__(self, filePath: str):
+    def __init__(self, filePath, UserRecord, GameRecord):
 
         self.filePath = filePath
+        self.UserRecord = UserRecord
+        self.GameRecord = GameRecord
         self.connected = False
         self.conn = None
         self.cursor = None
 
     # Establish a connection to the SQLite database.
-    def connect(self) -> bool:
+    def connect(self):
         if os.path.exists(self.filePath):
             self.conn = sqlite3.connect(self.filePath)
             self.cursor = self.conn.cursor()
             self.connected = True
 
-        return self.connected
-
     # Close the connection to the database
-    def close_connection(self) -> None:
+    def close_connection(self):
         if self.connected:
             self.conn.close()
             self.connected = False
 
     # Reads contents of the Users table into an array of 'UserRecords'
-    def read_users(self) -> List[UserRecord]:
+    def read_users(self) -> list:
         self.cursor.execute("SELECT * FROM Users")
         userDetails = self.cursor.fetchall()
 
         users = []
         for details in userDetails:
             username, passwordHash, bestGame, admin, dateJoined = details
-            users.append(UserRecord(username, passwordHash, bestGame, admin, dateJoined))
+            users.append(self.UserRecord(username, passwordHash, bestGame, admin, dateJoined))
 
         # Sort users by username using insertion sort method
         self.insertion_sort(users, "username")
@@ -46,51 +43,51 @@ class Database:
         return users
 
     # Reads contents of the Games table into an array of 'GameRecords'
-    def read_games(self) -> List[GameRecord]:
+    def read_games(self) -> list:
         self.cursor.execute("SELECT * FROM Games")
         gameDetails = self.cursor.fetchall()
 
         games = []
         for details in gameDetails:
             GameID, username, dateCompleted, timeTaken, bombFrequency, boardSize, lives = details
-            games.append(GameRecord(GameID, username, dateCompleted, timeTaken, bombFrequency, boardSize, lives))
+            games.append(self.GameRecord(username, dateCompleted, timeTaken, bombFrequency, boardSize, lives, GameID))
 
         # Sort games by GameID using insertion sort method
-        self.insertion_sort(games, "GameID")
+        self.insertion_sort(games, "game_id")
 
         return games
 
-    # Sort an array of objects based on a specified attribute, intended to sort the arrays from read_users and read_games before they are returned
-    def insertion_sort(self, array: List, attribute: str) -> None:
+    # Sort an array of objects based on a specified property, intended to sort the arrays from read_users and read_games before they are returned
+    def insertion_sort(self, array: list, property: str):
         for i in range(1, len(array)):
             key = array[i]
             j = i - 1
 
-            # Extract the attribute value for sorting
-            key_attribute = getattr(key, attribute)
+            # Extract the property value for sorting
+            key_property = getattr(key, property)
 
-            while j >= 0 and getattr(array[j], attribute) > key_attribute:
+            while j >= 0 and getattr(array[j], property) > key_property:
                 array[j + 1] = array[j]
                 j -= 1
 
             array[j + 1] = key
 
     # Deletes the user provided from the 'Users' table, 'user' below is an instance of the 'UserRecord' class
-    def delete_user(self, user: UserRecord) -> None:
+    def delete_user(self, user):
         query = "DELETE FROM Users WHERE Username = ?"
         self.cursor.execute(query, (user.username,))
         self.conn.commit()
 
     # Adds one user to the 'Users' table, 'user' below is an instance of the 'UserRecord' class
-    def add_user(self, user: UserRecord) -> None:
+    def add_user(self, user):
         query = "INSERT INTO Users (Username, PasswordHash, BestGame, Admin, DateJoined) VALUES (?, ?, ?, ?, ?)"
-        self.cursor.execute(query, (user.username, user.passwordHash, user.bestGame, user.admin, user.dateJoined))
+        self.cursor.execute(query, (user.username, user.password_hash, user.best_game, user.admin, user.date_joined))
         self.conn.commit()
 
     # Adds one game to the 'Games' table, 'game' below is an instance of the 'GameRecord' class
-    def add_game(self, game: GameRecord) -> None:
-        query = "INSERT INTO Games (GameID, Username, DateCompleted, TimeTaken, BombFrequency, BoardSize, Lives) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        self.cursor.execute(query, (game.GameID, game.username, game.dateCompleted, game.timeTaken, game.bombFrequency, game.boardSize, game.lives))
+    def add_game(self, user, game):
+        query = "INSERT INTO Games (Username, DateCompleted, TimeTaken, BombFrequency, BoardSize, Lives) VALUES (?, ?, ?, ?, ?, ?)"
+        self.cursor.execute(query, (user.username, game.date_completed, game.time_taken, game.bomb_frequency, game.board_size, game.lives))
         self.conn.commit()
 
 # This if statement is true when this code is run directly, if this is the case the database will be entirely reset, adding only the default admin user

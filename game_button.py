@@ -25,7 +25,7 @@ class GameButton:
             self.game.number_of_bombs += 1
 
     # handle the user clicking the button
-    def handle_click(self, manuallyClicked: bool) -> None:
+    def handle_click(self, manuallyClicked):
         if manuallyClicked:
             self.game.clicked_buttons += 1
 
@@ -65,7 +65,7 @@ class GameButton:
                 self.game.game_over("win")
 
     # handle the user flagging a button
-    def handle_right_click(self) -> None:
+    def handle_right_click(self):
         if not self.clicked and not str(self.button['state']) == 'disabled':
             self.flagged = not self.flagged
             if self.flagged:

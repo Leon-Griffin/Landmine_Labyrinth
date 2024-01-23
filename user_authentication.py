@@ -4,7 +4,7 @@ import datetime
 
 class UserAuthentication:
 
-    def __init__(self, root, database=None, users=None):
+    def __init__(self, root, UserRecord, database=None, users=None):
         self.root = root
         self.users = users or []
         self.database = database
@@ -47,7 +47,8 @@ class UserAuthentication:
         password_entry2.grid(row=2, column=1, padx=10, pady=10)
 
         Button(signup_window, text="Back", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: (self.destroy_window(signup_window), self.authenticate_user())).grid(row=3, column=0)
-        submit_button = Button(signup_window, text="Submit", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: self.destroy_window(signup_window))
+
+        submit_button = Button(signup_window, text="Submit", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: [self.destroy_window(signup_window), self.submit_signup(username_var.get(), password1_var.get(), password2_var.get())])
         submit_button.grid(row=3, column=1, columnspan=2, pady=15)
         submit_button.config(state='disabled')
 
@@ -73,7 +74,8 @@ class UserAuthentication:
         password_entry.grid(row=1, column=1, padx=10, pady=10)
 
         Button(login_window, text="Back", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: (self.destroy_window(login_window), self.authenticate_user())).grid(row=3, column=0)
-        submit_button = Button(login_window, text="Submit", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: self.destroy_window(login_window))
+
+        submit_button = Button(login_window, text="Submit", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda: [self.destroy_window(login_window), self.submit_login(username_var.get(), password_var.get())])
         submit_button.grid(row=3, column=0, columnspan=2, pady=15)
         submit_button.config(state='disabled')
 
@@ -85,15 +87,19 @@ class UserAuthentication:
     def submit_signup(self, username, password1, password2):
         if password1 != password2:
             messagebox.showerror("Error", "Passwords do not match!")
+            self.authenticate_user()
             
         elif self.binary_search_users(username) is not None:
             messagebox.showerror("Error", "Username already in use!")
+            self.authenticate_user()
             
         elif len(password1) < 5:
             messagebox.showerror("Error", "Password should be 5 characters or more!")
+            self.authenticate_user()
             
         elif password1 == username:
             messagebox.showerror("Error", "Username should not be the same as the password!")
+            self.authenticate_user()
             
         else:
             try:
@@ -108,14 +114,19 @@ class UserAuthentication:
                 self.authentication_over = True
 
             except Exception as e:
-                messagebox.showerror("Error", f"Sign up unsuccessful: {str(e)}")
+                messagebox.showerror("Error", f"Sign up unsuccessful: {e},\nplease skip authentication or try again")
+                self.authenticate_user()
 
     def submit_login(self, username, password):
         user_index = self.binary_search_users(username)
         if user_index is None:
             messagebox.showinfo("ERROR", "User does not exist!")
-        elif not bcrypt.checkpw(password.encode('utf-8'), self.users[user_index].passwordHash):
+            self.authenticate_user()
+
+        elif not bcrypt.checkpw(password.encode('utf-8'), self.users[user_index].password_hash):
             messagebox.showinfo("ERROR", "Incorrect password!")
+            self.authenticate_user()
+            
         else:
             messagebox.showinfo("Success", "Log in was successful")
             self.current_user = self.users[user_index]
@@ -135,14 +146,14 @@ class UserAuthentication:
         return None
 
 if __name__ == "__main__":
-    from new_main import create_root
+    from main import create_root
     from user_record import UserRecord
     root = create_root()
 
     authentication_instance = UserAuthentication(root, UserRecord)
     authentication_instance.authenticate_user()
 
-    while (not authentication_instance.completed_authentication) and (not authentication_instance.skipped_authentication):
+    while not authentication_instance.authentication_over:
         root.update()
 
     if authentication_instance.current_user is None:

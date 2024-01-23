@@ -9,6 +9,7 @@ class Gameplay:
     def __init__(self, root, game_options):
         self.root = root
         self.game_over_flag = False
+        self.end_condition = None
 
         # button counters - for win condition and stats screen
         self.revealed_buttons = 0
@@ -91,10 +92,12 @@ class Gameplay:
         # freeze all buttons
         [button.button.config(state='disabled') for row in range(self.board_size) for button in self.buttons[row]]
         
+        if self.end_condition == "win": self.date_completed = datetime.now().strftime('%d/%m/%y')
+
         self.game_over_flag = True
     
 if __name__ == "__main__":
-    from new_main import create_root
+    from main import create_root
     from game_options import GameCustomisation
     from game_over import GameOver
 
@@ -113,10 +116,11 @@ if __name__ == "__main__":
         game = Gameplay(root, game_options)
         game.play_game()
         
-        while not game.game_over_flag:
+        while root.winfo_exists() and not game.game_over_flag:
             root.update()
         
-        GameOver(game, play_game).end_game("toplevel")
+        GameOver(game, play_game).end_game()
+        print("Game Over")
 
     root = create_root()
     play_game(root)

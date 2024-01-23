@@ -2,15 +2,16 @@ from tkinter import Toplevel, Label, Frame, font, Button, ttk, messagebox
 
 class GameOver:
 
-    def __init__(self, game, play_game):
+    def __init__(self, game, play_game, current_user=None):
         self.game = game
         self.end_condition = game.end_condition
         self.play_game = play_game
+        self.current_user = current_user
 
     # display the game over menu (play again, view stats, quit game, and back to options)
     def end_game(self, platform=None):
         
-        if platform is not None:
+        if platform is None:
             # creating a Toplevel widget to display game over
             end_message = Toplevel(self.game.root)
             end_message.title("Game Over")
@@ -31,14 +32,14 @@ class GameOver:
         # Display a button to view the stats of the game
         Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="View Stats", command=lambda: [end_message.destroy(), self.view_stats()]).grid(row=1, column = 0, padx=25, pady=10)
 
-        # display a button to retry the game
-        Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="Retry", command=lambda: [end_message.destroy(), self.game.game_frame.destroy(), self.play_game(self.game.root, (self.game.board_size, self.game.bomb_frequency, self.game.lives))]).grid(row=1, column = 1, padx=25, pady=10)
+        # display a button to retry the same settings
+        Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="New Game", command=lambda: [end_message.destroy(), self.game.game_frame.destroy(), self.play_game(self.game.root, self.current_user, (self.game.board_size, self.game.bomb_frequency, self.game.lives))]).grid(row=1, column = 1, padx=25, pady=10)
 
         # display a button to quit the game
         Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="Quit Game", command=lambda:[messagebox.showinfo("Landmine Labyrinth", "Thank you for playing!"), self.game.root.destroy()]).grid(row=2, column = 0, padx=25, pady=10)
 
         # display a button to return to game settings
-        Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="Return to options", command=lambda: [end_message.destroy(), self.game.game_frame.destroy(), self.play_game(self.game.root)]).grid(row=2, column = 1, padx=25, pady=10)
+        Button(end_message, font=font.Font(family="Fixedsys", size=20, weight="bold"), text="Return to options", command=lambda: [end_message.destroy(), self.game.game_frame.destroy(), self.play_game(self.game.root, self.current_user)]).grid(row=2, column = 1, padx=25, pady=10)
 
     # window to view stats such as time taken and buttons clicked etc
     def view_stats(self):
@@ -68,11 +69,7 @@ class GameOver:
         }
 
         # Create a Treeview widget inside statsFrame
-        tree = ttk.Treeview(statsFrame, columns=("Statistic", "Value"), show="headings", style="Custom.Treeview")
-
-        # Define a custom style for the Treeview
-        tree_style = ttk.Style()
-        tree_style.configure("Custom.Treeview", font=font.Font(family="Fixedsys", size=20, weight="bold"))
+        tree = ttk.Treeview(statsFrame, columns=("Statistic", "Value"), show="headings")
 
         # Define column headings
         tree.heading("Statistic", text="STATISTIC")
@@ -90,4 +87,4 @@ class GameOver:
             tree.insert("", "end", values=(stat, value))
             
         # create a back button
-        Button(statsFrame, text="Back", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda:[statsFrame.destroy(), self.end_game()]).pack(pady=10)
+        Button(statsFrame, text="Back", font=font.Font(family="Fixedsys", size=20, weight="bold"), command=lambda:[statsFrame.destroy(), self.end_game("root")]).pack(pady=10)

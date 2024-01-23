@@ -59,7 +59,7 @@ class GameCustomisation:
 
 # Run the code if this script is the main program.
 if __name__ == "__main__":
-    from new_main import create_root
+    from main import create_root
 
     root = create_root()
 
